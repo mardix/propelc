@@ -16,7 +16,7 @@ import argparse
 yaml.Dumper.ignore_aliases = lambda *args: True
 
 __title__ = "PropelC"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 CWD = os.getcwd()
 CWD_PROPEL = "%s/_propelc" % CWD
@@ -162,8 +162,8 @@ propelc:
   # The full path where the app will reside: /home/domain/domain.com  
   app_path:        
   
-  containers:
-    # Key of the target to be used when deploying
+  envs:
+    # Key of the environments to be used when deploying
     webs:           
     
       # List of all hosts 
@@ -256,7 +256,7 @@ def gen_playbook():
         raise Exception("Missing `propelc` in propel.yml")
 
     app_path = propel.get("app_path")
-    containers = propel.get("containers")
+    envs = propel.get("envs")
     user = "root"
     upgrade_propel = propel.get("upgrade", False)
 
@@ -267,7 +267,7 @@ def gen_playbook():
         raise Exception(
             "`app_path` must be directory path  with the domain in the format  `/home/site/site.com`")
 
-    hostsd = {k: v.get("hosts") for k, v in containers.items()}
+    hostsd = {k: v.get("hosts") for k, v in envs.items()}
 
     # CREATE HOST FILE
     with open(HOST_FILE, "w") as h:
@@ -318,7 +318,7 @@ def gen_playbook():
     ])
 
     # CONTAINERS
-    for name, d in containers.items():
+    for name, d in envs.items():
         hosts = d.get("hosts")
         domains = d.get("domains")
         commands = d.get("propel")
@@ -397,7 +397,7 @@ def get_endpoints():
     with open(PROPEL_FILE) as p:
         propel = yaml.load(p)
     xnodep = propel.get("propelc")
-    return xnodep.get("containers").keys()
+    return xnodep.get("envs").keys()
 
 
 # ------------------------------------------------------------------------------
@@ -436,10 +436,10 @@ def cmd():
                             help="Provision new application",
                             action="store_true")
         parser.add_argument("-l", "--list",
-                            help="List all the containers to deploy",
+                            help="List all the environments to deploy",
                             action="store_true")
         parser.add_argument("-d", "--deploy",
-                            help="Deploy containers to hosts ie [-d admin network web ...]",
+                            help="Deploy environments to hosts ie [-d admin network web ...]",
                             nargs='*')
         parser.add_argument("-a", "--all",
                             help="Deploy all ie[-a]",
@@ -494,13 +494,13 @@ def cmd():
                     cmd.append(tags)
                 else:
                     tags = "ALL"
-                header("Deploying Containers: %s" % tags)
+                header("Deploying Environments: %s" % tags)
                 run_playbook(*cmd)
                 print("Done!")
 
             # List Containers
             else:
-                header("Containers list")
+                header("Environments list")
                 for c in get_endpoints():
                     print("- %s" % c)
                 print("")
